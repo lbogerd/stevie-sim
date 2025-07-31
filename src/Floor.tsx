@@ -16,21 +16,21 @@ export function Floor() {
       <mesh
         ref={meshRef}
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, 0, 0]}
+        position={[0, 0.01, 0]}
         receiveShadow
       >
         <planeGeometry args={[20, 20]} />
         <MeshReflectorMaterial
           blur={[400, 100]}
           resolution={1024}
-          mixBlur={20}
+          mixBlur={1.5}
           mixStrength={2}
           roughness={0.5}
           depthScale={0.1}
-          minDepthThreshold={0.8}
+          minDepthThreshold={0.4}
           maxDepthThreshold={1.25}
           color="#eab676"
-          metalness={0.1}
+          metalness={0.5}
           map={texture}
         />
       </mesh>
