@@ -12,7 +12,7 @@ export function Floor() {
   texture.repeat.set(8, 8); // Tweak numbers for more/less tiling
 
   return (
-    <RigidBody type="fixed" colliders="cuboid">
+    <RigidBody type="fixed">
       <mesh
         ref={meshRef}
         rotation={[-Math.PI / 2, 0, 0]}
