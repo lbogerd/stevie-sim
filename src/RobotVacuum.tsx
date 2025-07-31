@@ -47,10 +47,10 @@ export function RobotVacuum() {
     <RigidBody
       ref={ref}
       mass={1}
-      position={[0, 0.5, 0]}
-      restitution={0} // Bounciness
-      friction={5}
-      linearDamping={0} // slows it down automatically
+      position={[0, 0.1, 0]}
+      restitution={8} // Bounciness
+      friction={1}
+      linearDamping={12} // slows it down automatically
     >
       <group>
         {/* Main body */}
