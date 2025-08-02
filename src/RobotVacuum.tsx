@@ -1,93 +1,101 @@
-import { useFrame } from "@react-three/fiber";
+import { useKeyboardControls } from "@react-three/drei";
+import { useFrame, useThree } from "@react-three/fiber";
 import { RapierRigidBody, RigidBody, vec3 } from "@react-three/rapier";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 
 export function RobotVacuum() {
   const robotBody = useRef<null | RapierRigidBody>(null);
-  const [logCounter, setLogCounter] = useState(0);
-  const [frameCounter, setFrameCounter] = useState(0);
+  const { camera } = useThree();
 
-  // Keyboard controls
-  const keys = useRef<{ [key: string]: boolean }>({});
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      keys.current[e.key] = true;
-    };
-    const handleKeyUp = (e: KeyboardEvent) => {
-      keys.current[e.key] = false;
-    };
+  const [, get] = useKeyboardControls();
 
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, []);
-
-  // Physics step
   useFrame(() => {
-    setLogCounter(logCounter + 1);
-    setFrameCounter(frameCounter + 1);
-
     if (!robotBody.current) return;
 
-    // log every 30 frames
-    if (logCounter >= 29) {
-      console.log(`CURRENT VELOCITIES | frame: ${frameCounter}`);
-      console.log(
-        `linear velocity: ${JSON.stringify(robotBody.current.linvel())}`
-      );
-      console.log(
-        `angular velocity: ${JSON.stringify(robotBody.current.angvel())}`
-      );
+    // Update camera to chase robot
+    const robotPosition = robotBody.current.translation();
+    camera.position.set(robotPosition.x, 5, robotPosition.z + 10);
+    camera.lookAt(robotPosition.x, 0, robotPosition.z);
 
-      setLogCounter(0);
-    }
+    const { forward, backward, leftward, rightward } = get();
+    const keysPressed = forward || backward || leftward || rightward;
 
-    const keysPressed = Object.values(keys.current).length !== 0;
+    const currentVel = vec3(robotBody.current.linvel());
+    const currentSpeed = Math.sqrt(
+      currentVel.x * currentVel.x + currentVel.z * currentVel.z
+    );
+
+    // Engine-like parameters
+    const maxSpeed = 2.5; // Low max speed like a vacuum cleaner
+    const acceleration = 0.12; // Gradual acceleration
 
     if (keysPressed) {
-      const force = 0.1;
-      const impulse = {
-        x: 0,
-        y: 0,
-        z: 0,
-      };
+      // Calculate desired direction
+      const direction = { x: 0, z: 0 };
+      if (forward) direction.z -= 1;
+      if (backward) direction.z += 1;
+      if (leftward) direction.x -= 1;
+      if (rightward) direction.x += 1;
 
-      if (keys.current["w"] || keys.current["ArrowUp"]) impulse.z -= force;
-      if (keys.current["s"] || keys.current["ArrowDown"]) impulse.z += force;
-      if (keys.current["a"] || keys.current["ArrowLeft"]) impulse.x -= force;
-      if (keys.current["d"] || keys.current["ArrowRight"]) impulse.x += force;
-
-      robotBody.current.addForce(impulse, true);
-    } else {
-      const linearVector = vec3(robotBody.current.linvel());
-      const angularVector = vec3(robotBody.current.linvel());
-
-      if (linearVector.length() < 100) {
-        robotBody.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      // Normalize direction
+      const dirLength = Math.sqrt(
+        direction.x * direction.x + direction.z * direction.z
+      );
+      if (dirLength > 0) {
+        direction.x /= dirLength;
+        direction.z /= dirLength;
       }
-      if (angularVector.length() < 100) {
-        robotBody.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
+
+      // Apply acceleration force if under max speed
+      if (currentSpeed < maxSpeed) {
+        const force = acceleration * (1 - currentSpeed / maxSpeed); // Diminishing acceleration as speed increases
+        robotBody.current.addForce(
+          {
+            x: direction.x * force,
+            y: 0,
+            z: direction.z * force,
+          },
+          true
+        );
       }
+    } else if (currentSpeed < 0.05) {
+      // Stop completely when very slow
+      robotBody.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    }
+
+    // Ensure we don't exceed max speed
+    if (currentSpeed > maxSpeed) {
+      const scale = maxSpeed / currentSpeed;
+      robotBody.current.setLinvel(
+        {
+          x: currentVel.x * scale,
+          y: currentVel.y,
+          z: currentVel.z * scale,
+        },
+        true
+      );
     }
   });
+
+  const height = 0.2; // Height of the robot vacuum
 
   return (
     <RigidBody
       ref={robotBody}
-      mass={1}
-      position={[0, 0.1, 0]}
-      restitution={8} // Bounciness
-      friction={1}
-      linearDamping={12} // slows it down automatically
+      mass={5}
+      position={[0, height, 0]}
+      linearDamping={5.0}
+      angularDamping={3.0}
+      friction={2.5}
+      restitution={0.1}
+      enabledTranslations={[true, false, true]}
+      enabledRotations={[false, true, false]}
+      colliders="hull"
     >
       <group>
         {/* Main body */}
         <mesh castShadow>
-          <cylinderGeometry args={[0.6, 0.6, 0.2, 32]} />
+          <cylinderGeometry args={[0.6, 0.6, height, 32]} />
           <meshStandardMaterial color="#22223b" />
         </mesh>
         {/* Top */}
@@ -96,7 +104,7 @@ export function RobotVacuum() {
           <meshStandardMaterial color="#f2e9e4" />
         </mesh>
         {/* Button */}
-        <mesh position={[0.2, 0.16, 0]}>
+        <mesh position={[height, 0.16, 0]}>
           <cylinderGeometry args={[0.08, 0.08, 0.02, 16]} />
           <meshStandardMaterial color="#c9ada7" />
         </mesh>
