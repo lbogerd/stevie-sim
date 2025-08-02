@@ -5,36 +5,33 @@ export function Room() {
     <group>
       {/* Four walls forming a square room */}
       {/* Back wall */}
-      <RigidBody type="fixed" colliders="cuboid">
-        <mesh position={[0, 1, -10]}>
-          <boxGeometry args={[20, 2, 0.4]} />
-          <meshStandardMaterial color="#f4f4f3" />
-        </mesh>
-      </RigidBody>
+      <Wall position={[0, 1, -10]} />
 
       {/* Front wall */}
-      <RigidBody type="fixed" colliders="cuboid">
-        <mesh position={[0, 1, 10]}>
-          <boxGeometry args={[20, 2, 0.4]} />
-          <meshStandardMaterial color="#f4f4f3" />
-        </mesh>
-      </RigidBody>
+      <Wall position={[0, 1, 10]} />
 
       {/* Left wall */}
-      <RigidBody type="fixed" colliders="cuboid">
-        <mesh position={[-10, 1, 0]} rotation={[0, Math.PI / 2, 0]}>
-          <boxGeometry args={[20, 2, 0.4]} />
-          <meshStandardMaterial color="#f4f4f3" />
-        </mesh>
-      </RigidBody>
+      <Wall position={[-10, 1, 0]} rotation={[0, Math.PI / 2, 0]} />
 
       {/* Right wall */}
-      <RigidBody type="fixed" colliders="cuboid">
-        <mesh position={[10, 1, 0]} rotation={[0, Math.PI / 2, 0]}>
-          <boxGeometry args={[20, 2, 0.4]} />
-          <meshStandardMaterial color="#f4f4f3" />
-        </mesh>
-      </RigidBody>
+      <Wall position={[10, 1, 0]} rotation={[0, -Math.PI / 2, 0]} />
     </group>
+  );
+}
+
+function Wall({
+  position,
+  rotation,
+}: {
+  position: [number, number, number];
+  rotation?: [number, number, number];
+}) {
+  return (
+    <RigidBody type="fixed" colliders="cuboid" restitution={0.1}>
+      <mesh position={position} rotation={rotation}>
+        <boxGeometry args={[20, 2, 0.4]} />
+        <meshStandardMaterial color="#f4f4f3" />
+      </mesh>
+    </RigidBody>
   );
 }
