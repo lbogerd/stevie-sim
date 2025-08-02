@@ -2,6 +2,7 @@ import { useKeyboardControls } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { RapierRigidBody, RigidBody, useRapier } from "@react-three/rapier";
 import { useEffect, useRef } from "react";
+import { Propellor } from "./Propellor";
 
 export function RobotVacuum() {
   const robotBody = useRef<null | RapierRigidBody>(null);
@@ -107,6 +108,20 @@ export function RobotVacuum() {
           <cylinderGeometry args={[0.08, 0.08, 0.02, 16]} />
           <meshStandardMaterial color="#c9ada7" />
         </mesh>
+
+        {/* Propellors */}
+        <Propellor
+          position={[0.4, height + 0.05, 0]}
+          orientation="horizontal"
+          size={0.3}
+          blades={3}
+        />
+        <Propellor
+          position={[-0.4, height + 0.05, 0]}
+          orientation="horizontal"
+          size={0.3}
+          blades={3}
+        />
       </group>
     </RigidBody>
   );
